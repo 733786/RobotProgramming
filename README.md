@@ -1,5 +1,5 @@
 # RobotProgramming
-###Project by Giulio Fedeli - fedeli.1873677@studenti.uniroma.it 
+### Project by Giulio Fedeli - fedeli.1873677@studenti.uniroma.it 
 
 This project is part of the Robot Programming course in the context of the  AI & Robotics Master's Degree at the University of La Sapienza in Rome, Italy.<br>
 

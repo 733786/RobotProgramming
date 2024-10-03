@@ -97,7 +97,7 @@ bool World::collides(const IntPoint &p, const int &radius) const
     for (int c = -radius; c <= radius; ++c)
     {
       IntPoint off(r, c);
-      if (off * off > r2)
+
         continue;
       IntPoint p_test = p + IntPoint(r, c);
       if (!inside(p_test))
@@ -117,14 +117,18 @@ void World::draw(float rotationV, float translationV)
     if (items[i])
       items[i]->draw();
   }
+
+  cv::Mat resized_image;
+  cv::resize(_display_image, resized_image, cv::Size(), 0.5, 0.5);
+
   cv::Point text_position(0, 30);   //  Declaring the text position     //
   cv::Point text_position2(0, 60);  //  Declaring the text position     //
   cv::Scalar font_Color(0, 0, 0);   //  Declaring the color of the font //
   int font_size = 1;
   int font_weight = 1;
-  cv::putText(_display_image, "Rotation velocity   : " + to_string(rotationV), text_position, 0, font_size, font_Color, font_weight);
-  cv::putText(_display_image, "Translation velocity : " + to_string(translationV), text_position2, 0, font_size, font_Color, font_weight);
-  cv::imshow("map", _display_image);
+  cv::putText(resized_image, "Rotation velocity   : " + to_string(rotationV), text_position, 0, font_size, font_Color, font_weight);
+  cv::putText(resized_image, "Translation velocity : " + to_string(translationV), text_position2, 0, font_size, font_Color, font_weight);
+  cv::imshow("map", resized_image); 
 }
 
 void World::timeTick(float dt)

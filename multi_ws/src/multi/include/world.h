@@ -13,25 +13,25 @@ class World {
 
   World();
 
-  inline uint8_t& at(const IntPoint& p) { return grid[cols * p.x() + p.y()]; }
+  inline uint8_t& at(const IntPoint& p) { return grid[cols * p.x + p.y]; }
 
-  inline uint8_t at(const IntPoint& p) const { return grid[cols * p.x() + p.y()]; }
+  inline uint8_t at(const IntPoint& p) const { return grid[cols * p.x + p.y]; }
 
   inline bool inside(const IntPoint& p) const {
-    return p.x() >= 0 && p.y() >= 0 && p.x() < rows && p.y() < cols;
+    return p.x >= 0 && p.y >= 0 && p.x < rows && p.y < cols;
   }
 
   bool collides(const IntPoint& p, const int& radius) const;
 
   inline IntPoint world2grid(const Point& p) {
-    return IntPoint(p.x() * inv_res, p.y() * inv_res);
+    return IntPoint(p.x * inv_res, p.y * inv_res);
   }
 
   inline Point grid2world(const IntPoint& p) {
-    return Point(p.x() * res, p.y() * res);
+    return Point(p.x * res, p.y * res);
   }
 
-  void loadFromImage(const string filename);
+  void loadFromImage(const char* filename);
 
   bool traverseBeam(IntPoint& endpoint, const IntPoint& origin,
                     const float angle, const int max_range);
@@ -40,6 +40,7 @@ class World {
   void timeTick(float dt);
   bool add(WorldItem* item);
 
+  uint8_t* grid = 0;
   int rows = 0;
   int cols = 0;
   int size = 0;
@@ -50,10 +51,7 @@ class World {
   int num_items = 0;
 
  protected:
-  std::vector<uint8_t> _grid;
   cv::Mat _display_image;  // display purposes
-
-  std::vector<WorldItem*> _items;
 };
 
 class WorldItem {

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mrsim</name>
+  <name>multi</name>
   <version>0.0.1</version>
   <description>2D MultiRobot ROS Simulator</description>
   <!-- One maintainer tag required, multiple allowed, one person per tag -->

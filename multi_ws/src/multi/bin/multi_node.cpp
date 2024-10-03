@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
   //std::shared_ptr<WorldItem> robotPointer = std::dynamic_pointer_cast<WorldItem>(robotSharedPtr);
   Lidar l(M_PI, 10, 180, robotSharedPtr, Pose(0.4, 0, 0));
   
-  float delay = 0.04;
+  float delay = 0.07;
   int k;
 
   while (ros::ok()) {
@@ -64,10 +64,17 @@ int main(int argc, char** argv) {
       case 84:  // Down arrow
         robotSharedPtr->tv -= 0.2;
         break;  
-      case 32:  // Spacebar
+      case ' ':  // Spacebar
         robotSharedPtr->tv = 0;
         robotSharedPtr->rv = 0;
-        break;  
+        break;
+	  case 'C': // C
+      case 'c':
+        robotSharedPtr->tv = 0;
+        robotSharedPtr->rv = 0;
+        robotSharedPtr->pose.translation = w.grid2world(startPointDIAG);
+        robotSharedPtr->pose.theta = 0;
+        break;
       case 27:  // Esc
         return 0;
       default:

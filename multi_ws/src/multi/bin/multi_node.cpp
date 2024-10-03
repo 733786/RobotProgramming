@@ -14,9 +14,24 @@ int main(int argc, char** argv) {
   ros::NodeHandle nh("/");
   // Load the configuration file and initialize the simulator
   // Create a World object
+
+  // Define a buffer 
+    const size_t size = 1024; 
+    // Allocate a character array to store the directory path
+    char buffer[size];        
+    
+    // Call _getcwd to get the current working directory and store it in buffer
+    if (getcwd(buffer, size) != NULL) {
+        // print the current working directory
+        cout << "Current working directory: " << buffer << endl;
+    } 
+    else {
+        // If _getcwd returns NULL, print an error message
+        cerr << "Error getting current working directory" << endl;
+    }
   
   World w;
-  w.loadFromImage("/home/lattinone/RobotProgramming/Project/workspace/src/mrsim/test_data/background.png"); // We need a way to remove absolute path
+  w.loadFromImage(buffer << "multi_ws/src/multi/test_data/background.png"); // We need a way to remove absolute path
   // Create a shared pointer to the World
   std::shared_ptr<World> worldSharedPtr = std::make_shared<World>(w);
   IntPoint startPointDIAG(30.9061 / w.res, 51.4195 / w.res);

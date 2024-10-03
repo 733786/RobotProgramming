@@ -50,7 +50,6 @@ class World {
 
   int num_items = 0;
 
- protected:
   cv::Mat _display_image;  // display purposes
 };
 

@@ -2,7 +2,7 @@
 #include "world.h"
 class Lidar : public WorldItem {
  public:
-  Lidar(float fov_, float max_range_, int num_beams_, std::shared_ptr<World> w,
+  Lidar(float fov_, float max_range_, int num_beams_,
         std::shared_ptr<World> w, const Pose& pose_=Pose());
   Lidar(float fov_, float max_range_, int num_beams_,
         std::shared_ptr<WorldItem> p_, const Pose& pose_=Pose());

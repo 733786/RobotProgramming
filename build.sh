@@ -11,6 +11,7 @@ cd "$dir/multi_ws"     # Let's enter the workspace
 echo "${color}-------- RUNNING CATKIN_MAKE ---------${normal}"
 catkin_make             # Build the project
 echo "${color}-------- SOURCING THE WORKSPACE ---------${normal}"
-source multi_ws/devel/setup.sh   # Source the workspace
+source devel/setup.sh   # Source the workspace
 echo "Workspace successfully sourced. Now you can run ROS nodes :)"
+cd "$dir/.."
 echo "${color}-----------------------------------------${normal}"

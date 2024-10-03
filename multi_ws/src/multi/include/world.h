@@ -45,12 +45,8 @@ class World {
   int size = 0;
   float res = 0.05, inv_res = 20.0;
 
-  unsigned int rows = 0, cols = 0;
-  unsigned int size = 0;
-  float res = 0.05, i_res = 20.0;
   WorldItem* items[MAX_ITEMS];
 
-  cv::Mat display_image;
   int num_items = 0;
 
  protected:

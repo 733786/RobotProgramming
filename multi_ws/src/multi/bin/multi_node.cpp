@@ -1,10 +1,14 @@
 #include <ros/ros.h>
-#include <opencv2/highgui.hpp>
-
 #include <iostream>
+#include <fstream>
+
 #include "world.h"
 #include "robot.h"
 #include "lidar.h"
+#include "misc.h"
+
+#include <opencv2/highgui.hpp>
+#include <jsoncpp/json/json.h>
 
 
 using namespace std;
@@ -25,79 +29,104 @@ int main(int argc, char** argv) {
     }
 
     // Construct the full path using the current working directory
-    string imagePath = string(cwd) + "/multi_ws/src/multi/test_data/background.png";
+    string imagePath = string(cwd) + "/multi_ws/src/multi/test_data/";
   
+  // We might want a function that returns both maps for Lidars/Robots
+  //std::map<int, std::shared_ptr<Robot>> robotsPointersMap; 
+  //std::map<int, std::shared_ptr<Lidar>> lidarsPointersMap;
+
+  ros::init(argc, argv, "mrsim_node");
+  ros::NodeHandle nh("/");
+
+  /*
+  * Check if a JSON file path is provided as a command-line argument
+  * If not, then we simply terminate our node.
+  */
+  if (argc != 2) {
+      ROS_ERROR("Usage: rosrun mrsim mrsim_node <config_file.json>");
+      return 1;
+  }
+
+  // We get the path of the JSON file from the arguments
+  const std::string jsonFilePath = argv[1];
+
+  // Read and parse the JSON file
+  Json::Value root;
+  Json::Reader reader;
+  std::ifstream jsonFile((string(cwd) + "/multi_ws/src/multi/test_data/" + jsonFilePath).c_str(), std::ifstream::binary); // We need a way to remove absolute path
+
+  // Let's check if the JSON is properly written and decoded.
+  if (!jsonFile.good()) {
+      ROS_ERROR_STREAM("Failed to open JSON file: " << jsonFilePath << "\nPlease check your JSON config.");
+      return 1;
+  }
+
+  if (!reader.parse(jsonFile, root)) {
+      ROS_ERROR_STREAM("Failed to parse JSON file: " << reader.getFormattedErrorMessages() << "\nPlease check your JSON config.");
+      jsonFile.close();
+      return 1;
+  }
+
+  // We access the map file
+  std::string mapFileName = root["map"].asString();
+
   // Create a World object
   World w;
-  w.loadFromImage(imagePath.c_str()); // Pass the dynamically generated path
-  
-  // Create a shared pointer to the World
-  std::shared_ptr<World> worldSharedPtr = std::make_shared<World>(w);
-  IntPoint startPointDIAG(30.9061 / w.res, 51.4195 / w.res);
-  Pose robot_pose;
-  robot_pose.translation = w.grid2world(startPointDIAG);
-  
+  World w = World();
+  w.loadFromImage((imagePath + mapFileName).c_str());
+
   /**
-   * If we pass directly a Robot object inside make_shared, we are trying to create a shared pointer from an already constructed object,
-   * which is not how std::make_shared is intended to be used.
-   * 
-   * In fact, we are directly creating a std::shared_ptr<Robot> object and 
-   * costructing a Robot object directly inside the std::make_shared function.
-  */
-  std::shared_ptr<Robot> robotSharedPtr = std::make_shared<Robot>(0.3, worldSharedPtr, robot_pose);
-  /**
-   * TO USE, IN CASE | FOR NOW LET'S USE A NORMAL "SHAREDPTR" WITHOUT DYNAMIC CAST
-   * 
-   * Here, we're trying to cast robotSharedPtr (which points to a Robot object) into a std::shared_ptr<WorldItem> (which is a base class of Robot).
-   * With this being said, robotPointer will point to the same object as robotSharedPtr, but with the type std::shared_ptr<WorldItem>.
-   * 
-   * This is crucial because we want to construct a pointer to the Robot object, such that when we instantiate a Lidar object, we pass this pointer
-   * and the Lidar gets linked with the Robot.
-  */
-  //std::shared_ptr<WorldItem> robotPointer = std::dynamic_pointer_cast<WorldItem>(robotSharedPtr);
-  Lidar l(M_PI, 10, 180, robotSharedPtr, Pose(0.4, 0, 0));
+   * Create a shared pointer to the World.
+   * We instantiate the World in the same way we instantiate Robots/Lidars in getRobotsAndLidars().
+   * Check comments there.
+   * */
+  std::shared_ptr<World> worldSharedPtr(&w,
+                                        [](World* w) {
+                                            // Custom cleanup actions here, if needed
+                                            //delete w; // Clean up the Robot object
+                                        });
+  // Get Robots and Lidars
+  std::shared_ptr<Robot> robotP = getRobotsAndLidars(worldSharedPtr, root);
   
   float delay = 0.07;
   int k;
 
   while (ros::ok()) {
+
+    ros::spinOnce();
+
     // run a simulation iteration
-	worldSharedPtr->timeTick(delay);
-    worldSharedPtr->draw(robotSharedPtr->rv, robotSharedPtr->tv);
-    k=cv::waitKeyEx(delay*1000)&255;
+    w.timeTick(delay);
+    w.draw();
+
+    k = cv::waitKeyEx(delay*1000)&255;
     switch (k) {
       case 81:  // Left arrow
-        robotSharedPtr->rv += 0.10;
+        robotP->rv += 0.10;
         break;  
       case 82:  // Up arrow
-        robotSharedPtr->tv += 0.2;
+        robotP->tv += 0.2;
         break;  
       case 83:  // Right arrow
-        robotSharedPtr->rv -= 0.10;
+        robotP->rv -= 0.10;
         break;  
       case 84:  // Down arrow
-        robotSharedPtr->tv -= 0.2;
+        robotP->tv -= 0.2;
         break;  
       case ' ':  // Spacebar
-        robotSharedPtr->tv = 0;
-        robotSharedPtr->rv = 0;
-        break;
-	  case 'C': // C
-      case 'c':
-        robotSharedPtr->tv = 0;
-        robotSharedPtr->rv = 0;
-        robotSharedPtr->pose.translation = w.grid2world(startPointDIAG);
-        robotSharedPtr->pose.theta = 0;
+        robotP->tv = 0;
+        robotP->rv = 0;
+        robotP->pose_in_parent.theta = 0;
         break;
       case 27:  // Esc
         return 0;
       default:
-        robotSharedPtr->rv = 0;
+        robotP->rv = 0;
         continue;
     }
+
     // visualize the simulation
     cv::waitKey(100);
-    ros::spinOnce();
   }
+
   return 0;
-}

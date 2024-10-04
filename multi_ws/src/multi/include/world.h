@@ -1,16 +1,13 @@
 #pragma once
 #include <cstdint>
 #include <opencv2/opencv.hpp>
-#include "simple_geometry.h"
 
-using namespace std;
+#include "simple_geometry.h"
 
 struct WorldItem;
 
 class World {
- public:
-  static constexpr int MAX_ITEMS = 100;
-
+  public:
   World();
 
   inline uint8_t& at(const IntPoint& p) { return grid[cols * p.x + p.y]; }
@@ -31,39 +28,40 @@ class World {
     return Point(p.x * res, p.y * res);
   }
 
-  void loadFromImage(const char* filename);
+  void loadFromImage(const std::string filename);
 
   bool traverseBeam(IntPoint& endpoint, const IntPoint& origin,
                     const float angle, const int max_range);
 
-  void draw(float rotationV, float translationV);
+  void draw();
   void timeTick(float dt);
-  bool add(WorldItem* item);
+  void add(WorldItem* item);
 
-  uint8_t* grid = 0;
   int rows = 0;
   int cols = 0;
   int size = 0;
   float res = 0.05, inv_res = 20.0;
 
-  WorldItem* items[MAX_ITEMS];
-
-  int num_items = 0;
+  std::vector<WorldItem*> _items;
+  std::vector<uint8_t> grid;
 
   cv::Mat _display_image;  // display purposes
+
 };
 
 class WorldItem {
  public:
-  WorldItem(std::shared_ptr<World> w_, const Pose& p = Pose());
-  WorldItem(std::shared_ptr<WorldItem> p_, const Pose& p = Pose());
-  ~WorldItem();
-  Pose poseInWorld();
+	 WorldItem(std::shared_ptr<World> w_, const Pose &p = Pose());
+	 WorldItem(std::shared_ptr<WorldItem> parent_, const Pose &p = Pose());
+	 ~WorldItem();
+	 Pose poseInWorld();
 
-  virtual void draw() = 0;
-  virtual void timeTick(float dt) = 0;
+	 virtual void draw() = 0;
+	 virtual void timeTick(float dt) = 0;
 
-  Pose pose;
-  std::shared_ptr<WorldItem> parent = nullptr;
-  std::shared_ptr<World> world = nullptr;
+	 Pose pose;
+	 std::shared_ptr<WorldItem> parent = nullptr;
+	 Pose pose_in_parent;
+	 std::shared_ptr<World> world = nullptr;
+	 std::shared_ptr<WorldItem> parent = nullptr;
 };

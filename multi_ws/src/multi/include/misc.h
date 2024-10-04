@@ -6,4 +6,4 @@
 #include <jsoncpp/json/json.h> 
 using namespace std;
 
-std::shared_ptr<Robot> getRobotsAndLidars(std::shared_ptr<World> worldSharedPointer, Json::Value root);
+void getRobotsAndLidars(shared_ptr<World> worldSharedPointer, Json::Value root);

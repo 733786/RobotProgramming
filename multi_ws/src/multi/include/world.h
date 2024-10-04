@@ -59,8 +59,6 @@ class WorldItem {
 	 virtual void draw() = 0;
 	 virtual void timeTick(float dt) = 0;
 
-	 Pose pose;
-	 std::shared_ptr<WorldItem> parent = nullptr;
 	 Pose pose_in_parent;
 	 std::shared_ptr<World> world = nullptr;
 	 std::shared_ptr<WorldItem> parent = nullptr;

@@ -14,7 +14,7 @@
 using namespace std;
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "mrsim_node");
+  ros::init(argc, argv, "multi_node");
   ros::NodeHandle nh("/");
   // Load the configuration file and initialize the simulator
   // Create a World object
@@ -34,10 +34,6 @@ int main(int argc, char** argv) {
   // We might want a function that returns both maps for Lidars/Robots
   //std::map<int, std::shared_ptr<Robot>> robotsPointersMap; 
   //std::map<int, std::shared_ptr<Lidar>> lidarsPointersMap;
-
-  ros::init(argc, argv, "mrsim_node");
-  ros::NodeHandle nh("/");
-
   /*
   * Check if a JSON file path is provided as a command-line argument
   * If not, then we simply terminate our node.
@@ -71,7 +67,6 @@ int main(int argc, char** argv) {
   std::string mapFileName = root["map"].asString();
 
   // Create a World object
-  World w;
   World w = World();
   w.loadFromImage((imagePath + mapFileName).c_str());
 
@@ -130,3 +125,4 @@ int main(int argc, char** argv) {
   }
 
   return 0;
+}

@@ -48,6 +48,7 @@ class World {
   vector<uint8_t> grid;
 
   cv::Mat _display_image;  // display purposes
+  cv::Mat resized_image;  // display purposes
 
 };
 

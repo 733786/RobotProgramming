@@ -6,22 +6,20 @@
 #include "nav_msgs/Odometry.h"
 #include "geometry_msgs/Twist.h"
 
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/convert.h> 
+
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 using namespace std;
-
-Robot::Robot(float radius_, shared_ptr<World> w_, const Pose& pose_)
-    : WorldItem(w_, pose_) {
-  radius = radius_;
-}
-
-Robot::Robot(float radius_, shared_ptr<WorldItem> p_, const Pose& pose_)
-    : WorldItem(p_, pose_) {
-  radius = radius_;
-}
 
 Robot::Robot(int id_, string type_, string frame_id_, string namespace_,
             float radius_, shared_ptr<World> w_, const Pose &pose_,
             float max_rv_, float max_tv_, int parent_):
-        WorldItem(w_, pose_), nh("~") {
+        WorldItem(w_, pose_, frame_id_), nh("~") {
     id = id_;
     type = type_;
     frame_id = frame_id_;
@@ -32,13 +30,12 @@ Robot::Robot(int id_, string type_, string frame_id_, string namespace_,
     parent = parent_;
     isChild = false;
     w = w_;
-    relativePose = pose_;
+    parentFrameID = w_->worldFrameID; // "map"
 
     // Initialize the Odometry/cmdVel topic name based on the robot namespace
     odom_topic = "/" + namespace_ + "/odom";
     cmdVel_topic = "/" + namespace_ + "/cmd_vel";
 
-        
     robotOdometryPublisher = nh.advertise<nav_msgs::Odometry>(odom_topic, 1000); // Initialize the Odometry publisher
     cmdVelSubscriber = nh.subscribe(cmdVel_topic, 10, &Robot::cmdVelCallback, this); // Initialize the cmdVel Subscriber
 }
@@ -46,7 +43,7 @@ Robot::Robot(int id_, string type_, string frame_id_, string namespace_,
 Robot::Robot(int id_, string type_, string frame_id_, string namespace_,
             float radius_, shared_ptr<WorldItem> p_, const Pose &pose_,
             float max_rv_, float max_tv_, int parent_):
-        WorldItem(p_, pose_), nh("~") {
+        WorldItem(p_, pose_, frame_id_), nh("~"){
     id = id_;
     type = type_;
     frame_id = frame_id_;
@@ -57,7 +54,7 @@ Robot::Robot(int id_, string type_, string frame_id_, string namespace_,
     parent = parent_;
     isChild = true;
     p = p_;
-    relativePose = pose_;
+    parentFrameID = p->itemFrameID;// Anything outside "map"
 
     // Initialize the Odometry/cmdVel topic name based on the robot namespace
     odom_topic = "/" + namespace_ + "/odom";
@@ -69,8 +66,8 @@ Robot::Robot(int id_, string type_, string frame_id_, string namespace_,
 
 void Robot::draw() {
   int int_radius = radius * world->inv_res;
-  IntPoint p = world->world2grid(poseInWorld().translation);
-  cv::circle(world->_display_image, cv::Point(p.y, p.x), int_radius,
+  IntPoint point = world->world2grid(poseInWorld().translation);
+  cv::circle(world->_display_image, cv::Point(point.y, point.x), int_radius,
              cv::Scalar::all(0), -1);
 }
 
@@ -90,82 +87,38 @@ void Robot::cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg) {
   // Extract linear and angular velocities from the received message
   float linear_vel = msg->linear.x;
   float angular_vel = msg->angular.x;
+
   clampVelocity(linear_vel, max_tv, "Translation velocity exceeded for robot with ID[" + to_string(id) + "]!");
   clampVelocity(angular_vel, max_rv, "Rotational velocity exceeded for robot with ID[" + to_string(id) + "]!");
+
   // Update the Robot's velocities
   tv = linear_vel;
   rv = angular_vel;
 }
+
 void Robot::timeTick(float dt) {
 
   // Populate the Odometry message and publish it
   odom.header.stamp = ros::Time::now();
-  odom.header.frame_id = "map";
+  odom.header.frame_id = parentFrameID;
+  odom.child_frame_id = frame_id;
 
   Pose motion(tv * dt, 0, rv * dt);
-
-  Pose temp = Pose();
-
-  /**
-   * If this robot is a children of another robot, then we get the namespace (Robot_1 or Robot_2 etc.)
-   * and we update its pose based on the parent one + its relative pose.
-   * 
-   * If this robot is not a children, it means is a single robot with no parent,
-   * so simply take the poseInWorld() and namespace from constructor.
-  */
-  if(this->isChild) {
-    shared_ptr<Robot> parentRobotPointer = dynamic_pointer_cast<Robot>(this->p);
-
-    // Get the namespace (could be for example "robot_0/robot_1"), but get only the
-    // last bit in order to update the child_frame_id msg.
-    stringstream ss(this->namespc);
-    string lastPart;
-
-    while (getline(ss, lastPart, '/')) { // Get last pasrt
-    }
-
-    odom.child_frame_id = lastPart;
-    temp = this->p->pose_in_parent;
-    temp.translation = temp.translation + this->relativePose.translation;
-  } else {
-    odom.child_frame_id = this->namespc;
-    temp = poseInWorld();
-  }
-
-  Pose next_pose = temp * motion;
+  Pose next_pose(pose_in_parent * motion);
   IntPoint ip = IntPoint();
 
-  ip = world->world2grid(next_pose.translation);
-
+  // Needed for the children. We want the global coordinates of childrens, if we want to check for any collisions.
+  // Note that next_pose is always equal for childrens, since motion is equal to 0 (tv and rv are updated for parent, not children)
+  if(isChild) {
+    ip = world->world2grid((poseInWorld() * motion).translation);
+  } else {  
+    ip = world->world2grid(next_pose.translation);
+  }
+    
   int int_radius = radius * world->inv_res;
 
-  // if(this->id == 2) {
-  //   cout << "-------------------------------------------" << endl;
-  //   cout << "Pose for ID 2: " << temp << endl;    
-  //   cout << "New motion for robot with ID 2: " << motion << endl;
-  //   cout << "New ip for robot with ID 2: " << ip << endl;
-  //   cout << "-------------------------------------------" << endl;
-  // }
-
-  // if(this->id == 0) {
-  //   cout << "Pose for ID 0: " << temp << endl;
-  //   cout << "New motion for robot with ID 0: " << motion << endl;
-  //   cout << "New ip for robot with ID 0: " << ip << endl;
-  // }
-  if (!world->collides(ip, int_radius)) { // We have not collided, so let's update the position
-
-    if(!isChild) {
-      pose_in_parent = next_pose;
-      // Populate the odometry data here (position and orientation)
-      odom.pose.pose.position.x = pose_in_parent.translation.x * w->res;
-      odom.pose.pose.position.y = pose_in_parent.translation.y * w->res;
-      odom.pose.pose.orientation.x = pose_in_parent.theta; // Assuming theta represents orientation
-    } else { // We have a children, so let's take p-> | THIS CRASHES IF WE HAVE 3 ROBOTS ON TOP OF EACH OTHER
-      // Populate the odometry data here (position and orientation)
-      odom.pose.pose.position.x = next_pose.translation.x * p->world->res;
-      odom.pose.pose.position.y = next_pose.translation.y * p->world->res;
-      odom.pose.pose.orientation.x = next_pose.theta; // Assuming theta represents orientation   
-    }
+  if (!world->collides(ip, int_radius)) { // We have not collided, so let's update the position      
+    pose_in_parent = next_pose;
   } else { // We have collided. Here we must implement the collision mechanism for stopping both parent/child, but..
     if(isChild) {
       //cout << "Child collided!" << endl;
@@ -174,12 +127,86 @@ void Robot::timeTick(float dt) {
     }
   }
 
+  // // De-commenting this, properly shows the arrows of the children in RViz, but the pose of the children is broken.
+  // // By commenting this, the arrow on RViz stays fixed, but the children correctly follows the parent.
+  // if(isChild) {
+  //   shared_ptr<Robot> robotPointer = std::dynamic_pointer_cast<Robot>(p); // Get the parent
+
+  //   Pose motionChild = Pose(robotPointer->tv * dt, 0, robotPointer->rv * dt);
+
+  //   pose_in_parent.translation.x = pose_in_parent.translation.x + motionChild.translation.x;
+  //   pose_in_parent.translation.y = pose_in_parent.translation.y + motionChild.translation.y;
+  //   pose_in_parent.theta = pose_in_parent.theta + motionChild.theta;
+  // }
+
+  geometry_msgs::Quaternion geometry_quaternion;
+  tf2::Quaternion tf_quaternion;
+
+  tf_quaternion.setRPY(0.0, 0.0, pose_in_parent.theta);
+  tf_quaternion.normalize();
+  // Set the components of the geometry_msgs::Quaternion
+  geometry_quaternion.x = tf_quaternion.x();
+  geometry_quaternion.y = tf_quaternion.y();
+  geometry_quaternion.z = tf_quaternion.z();
+  geometry_quaternion.w = tf_quaternion.w();
   // Populate the odometry data here (position and orientation)
-  //ROS_INFO_STREAM("ID[" << id << "]: odom.pose.pose.position.x -> " << odom.pose.pose.position.x << endl);
-  //ROS_INFO_STREAM("ID[" << id << "]: odom.pose.pose.position.y -> " << odom.pose.pose.position.y << endl);
-  //ROS_INFO_STREAM("ID[" << id << "]: odom.pose.pose.orientation.x -> " << odom.pose.pose.orientation.x << endl);
+  odom.pose.pose.position.x = pose_in_parent.translation.x;
+  odom.pose.pose.position.y = pose_in_parent.translation.y;    
+
+  
+  odom.pose.pose.orientation = geometry_quaternion; // Assuming theta represents orientation
 
   // Publish the Odometry message
   robotOdometryPublisher.publish(odom);
+  transformRobot();
 
+}
+
+void Robot::transformRobot() {
+  // Get the 2D pose of the robot in world coordinates
+  Pose transformation = poseInWorld();
+
+  geometry_msgs::TransformStamped transform_stamped;
+  transform_stamped.header.stamp = ros::Time::now();
+  transform_stamped.header.frame_id = parentFrameID;
+  transform_stamped.child_frame_id = frame_id;
+
+  /**
+   * This is the right choice for representing 2D rotations.
+   * 
+   * Quaternion: x, y, z, w
+  */
+  tf2::Quaternion rotation;
+  rotation.setRPY(0.0, 0.0, transformation.theta);
+  rotation.normalize();
+
+  // Let's create a translation vector which will be composed by (x, y, z).
+  // Since we are in 2D, z is equal to 0.
+  tf2::Vector3 translation(transformation.translation.x, transformation.translation.y, 0.0);
+
+  // Now we create the Transform object, by applying the rotation and translation created before.
+  tf2::Transform tf_transform(rotation, translation);
+
+  // Translation part. We get the translation values and put them in the transform_stamped.
+  transform_stamped.transform.translation.x = tf_transform.getOrigin().x();
+  transform_stamped.transform.translation.y = tf_transform.getOrigin().y();
+  transform_stamped.transform.translation.z = tf_transform.getOrigin().z();
+
+  // Rotation part. We get the rotation values and put them in the transform_stamped.
+  transform_stamped.transform.rotation.x = tf_transform.getRotation().x();
+  transform_stamped.transform.rotation.y = tf_transform.getRotation().y();
+  transform_stamped.transform.rotation.z = tf_transform.getRotation().z();
+  transform_stamped.transform.rotation.w = tf_transform.getRotation().w();
+
+  // ROS_INFO_STREAM("ID: " << id << " | transform_stamped.transform.translation.x: " << transform_stamped.transform.translation.x);
+  // ROS_INFO_STREAM("ID: " << id << " | transform_stamped.transform.translation.y: " << transform_stamped.transform.translation.y);
+  // ROS_INFO_STREAM("ID: " << id << " | transform_stamped.transform.translation.z: " << transform_stamped.transform.translation.z);
+  // ROS_INFO_STREAM("ID: " << id << " | transform_stamped.transform.rotation.x: " << transform_stamped.transform.rotation.x);
+  // ROS_INFO_STREAM("ID: " << id << " | transform_stamped.transform.rotation.y: " << transform_stamped.transform.rotation.y);
+  // ROS_INFO_STREAM("ID: " << id << " | transform_stamped.transform.rotation.z: " << transform_stamped.transform.rotation.z);
+  // ROS_INFO_STREAM("ID: " << id << " | transform_stamped.transform.rotation.w: " << transform_stamped.transform.rotation.w);
+  // ROS_INFO_STREAM("-----------------------------------------------------------------");
+  // Create a TransformBroadcaster which will send the transform_stamped we created
+  static tf2_ros::TransformBroadcaster br;
+  br.sendTransform(transform_stamped);
 }

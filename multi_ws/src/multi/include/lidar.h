@@ -26,10 +26,13 @@ public:
   void draw();
   
   void publishLidarScan(); // Method to publish LaserScan data
+  void transformLidar();   // Method to transform the Lidar
+  
   int id;
   string type;
   string frame_id;
   string namespc;
+  string parentFrameID;
   int parent;
 
   float fov;

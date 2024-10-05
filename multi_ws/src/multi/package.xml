@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>multi</name>
-  <version>0.7.2</version>
+  <version>0.9.0</version>
   <description>2D MultiRobot ROS Simulator</description>
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -24,4 +24,7 @@
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_eigen</depend>
 </package>

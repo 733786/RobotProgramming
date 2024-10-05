@@ -43,6 +43,7 @@ class World {
   int cols = 0;
   int size = 0;
   float res = 0.05, inv_res = 20.0;
+  string worldFrameID = "map";
 
   vector<WorldItem*> _items;
   vector<uint8_t> grid;
@@ -54,8 +55,8 @@ class World {
 
 class WorldItem {
  public:
-	 WorldItem(shared_ptr<World> w_, const Pose &p = Pose());
-	 WorldItem(shared_ptr<WorldItem> parent_, const Pose &p = Pose());
+	 WorldItem(shared_ptr<World> w_, const Pose& p = Pose(), string frame_id_ = "");
+  	 WorldItem(shared_ptr<WorldItem> parent_, const Pose& p = Pose(), string frame_id_ = "");
 	 ~WorldItem();
 	 Pose poseInWorld();
 
@@ -65,4 +66,5 @@ class WorldItem {
 	 Pose pose_in_parent;
 	 shared_ptr<World> world = nullptr;
 	 shared_ptr<WorldItem> parent = nullptr;
+	 string itemFrameID;
 };

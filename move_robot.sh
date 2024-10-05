@@ -13,4 +13,4 @@ rostopic pub /"$topic_name"/cmd_vel geometry_msgs/Twist "linear:
 angular:
   x: $angular_x
   y: 0.0
-  z: 0.0" -r 1
+  z: 0.0"

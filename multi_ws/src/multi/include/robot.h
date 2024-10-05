@@ -57,3 +57,4 @@ class Robot : public WorldItem {
   nav_msgs::Odometry odom;                 // Odometry message
   string odom_topic;                       // Odometry topic
   string cmdVel_topic;                     // cmd_vel topic
+};

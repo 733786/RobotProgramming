@@ -33,7 +33,7 @@ Robot::Robot(int id_, string type_, string frame_id_, string namespace_,
     isChild = false;
     w = w_;
     parentFrameID = w_->worldFrameID; // "map"
-
+    
     // Initialize the Odometry/cmdVel topic name based on the robot namespace
     odom_topic = "/" + namespace_ + "/odom";
     cmdVel_topic = "/" + namespace_ + "/cmd_vel";
@@ -132,7 +132,7 @@ void Robot::timeTick(float dt) {
       //cout << "Parent collided!" << endl;
     }
   }
-
+  
   geometry_msgs::Quaternion geometry_quaternion;
   tf2::Quaternion tf_quaternion;
 

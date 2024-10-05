@@ -69,7 +69,7 @@ Lidar::~Lidar() {
 
 void Lidar::timeTick(float dt) {
   Pose piw = poseInWorld();
-
+  
   IntPoint origin=world->world2grid(piw.translation());
 
   if (! world->inside(origin))
@@ -78,7 +78,7 @@ void Lidar::timeTick(float dt) {
   float d_alpha = fov / num_beams;
   float alpha = (Rotation(piw.linear()).angle()) - fov / 2;
   float int_range = max_range * world->inv_res;
-
+    
   for (int i = 0; i < num_beams; ++i) {
     IntPoint endpoint;
     ranges[i] = max_range;
@@ -96,7 +96,7 @@ void Lidar::timeTick(float dt) {
 void Lidar::draw() {
   Pose piw = poseInWorld();
   IntPoint origin = world->world2grid(piw.translation());
-
+  
   if (!world->inside(origin))
     return;
 

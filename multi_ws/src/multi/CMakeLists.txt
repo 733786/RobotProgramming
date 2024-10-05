@@ -51,7 +51,6 @@ add_library(multi SHARED  # Library
     src/robot.cpp
     src/world.cpp
     src/lidar.cpp
-    src/simple_geometry.cpp
     src/misc.cpp
 )
 

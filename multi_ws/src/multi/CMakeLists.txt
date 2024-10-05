@@ -42,6 +42,10 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+# Required to include launch file
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
 # Package: multi
 add_library(multi SHARED  # Library
     src/robot.cpp

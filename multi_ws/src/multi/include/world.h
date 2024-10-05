@@ -2,32 +2,32 @@
 #include <cstdint>
 #include <opencv2/opencv.hpp>
 
-#include "simple_geometry.h"
+#include "types.h"
 
 using namespace std;
 
 struct WorldItem;
 
 class World {
-  public:
+ public:
   World();
 
-  inline uint8_t& at(const IntPoint& p) { return grid[cols * p.x + p.y]; }
+  inline uint8_t& at(const IntPoint& p) { return grid[cols * p.x() + p.y()]; }
 
-  inline uint8_t at(const IntPoint& p) const { return grid[cols * p.x + p.y]; }
+  inline uint8_t at(const IntPoint& p) const { return grid[cols * p.x() + p.y()]; }
 
   inline bool inside(const IntPoint& p) const {
-    return p.x >= 0 && p.y >= 0 && p.x < rows && p.y < cols;
+    return p.x() >= 0 && p.y() >= 0 && p.x() < rows && p.y() < cols;
   }
 
   bool collides(const IntPoint& p, const int& radius) const;
 
   inline IntPoint world2grid(const Point& p) {
-    return IntPoint(p.x * inv_res, p.y * inv_res);
+    return IntPoint(p.x() * inv_res, p.y() * inv_res);
   }
 
   inline Point grid2world(const IntPoint& p) {
-    return Point(p.x * res, p.y * res);
+    return Point(p.x() * res, p.y() * res);
   }
 
   void loadFromImage(const string filename);
@@ -43,7 +43,7 @@ class World {
   int cols = 0;
   int size = 0;
   float res = 0.05, inv_res = 20.0;
-  string worldFrameID = "map";
+  string worldFrameID = "odom";
 
   vector<WorldItem*> _items;
   vector<uint8_t> grid;
@@ -55,8 +55,8 @@ class World {
 
 class WorldItem {
  public:
-	 WorldItem(shared_ptr<World> w_, const Pose& p = Pose(), string frame_id_ = "");
-  	 WorldItem(shared_ptr<WorldItem> parent_, const Pose& p = Pose(), string frame_id_ = "");
+	  WorldItem(shared_ptr<World> w_, const Pose& p = Pose::Identity(), string frame_id_ = "");
+  	  WorldItem(shared_ptr<WorldItem> parent_, const Pose& p = Pose::Identity(), string frame_id_ = "");
 	 ~WorldItem();
 	 Pose poseInWorld();
 

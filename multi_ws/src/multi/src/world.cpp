@@ -45,14 +45,12 @@ void World::loadFromImage(const string filename)
     throw runtime_error("Unable to load image");
   }
 
-  cv::Mat resized_image;
-  cv::resize(_display_image, resized_image, cv::Size(), 0.5, 0.5);
-  cv::cvtColor(m, resized_image, cv::COLOR_BGR2GRAY);
-  size = resized_image.rows * resized_image.cols;
+  cv::cvtColor(m, _display_image, cv::COLOR_BGR2GRAY);
+  size = _display_image.rows * _display_image.cols;
   grid = vector<uint8_t>(size, 0x00);
-  rows = resized_image.rows;
-  cols = resized_image.cols;
-  memcpy(grid.data(), resized_image.data, size);
+  rows = _display_image.rows;
+  cols = _display_image.cols;
+  memcpy(grid.data(), _display_image.data, size);
 }
 
 bool World::collides(const IntPoint &p, const int &radius) const
@@ -80,8 +78,10 @@ bool World::collides(const IntPoint &p, const int &radius) const
 void World::draw() {
   for (const auto item : _items) item->draw();
 
+  cv::Mat resized_image;
+  cv::resize(_display_image, resized_image, cv::Size(), 0.5, 0.5);
   cv::imshow("Map", resized_image);
-  memcpy(resized_image.data, grid.data(), size); // Clean the display image
+  memcpy(_display_image.data, grid.data(), size); // Clean the display image
 }
 
 void World::timeTick(float dt) {

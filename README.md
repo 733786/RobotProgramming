@@ -23,3 +23,14 @@ To build the project a build.sh script is inlcuded in the main folder:
 ```sh
 . build.sh
 ```
+
+## How to run the code after building
+```sh
+rosrun multi multi_node <config>.json
+```
+
+A set of json configurations can be found in the following directory: "multi_ws/src/multi/test_data".
+
+#### Movement: ```. moveRobot.sh <robotName> <x> <y> <rv>```
+#### Odometry: ```. robotOdometry.sh <robotName>```
+#### Laser Scannings: ```. laserScan.sh <robotName>>```

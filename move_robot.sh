@@ -1,6 +1,6 @@
 #!/bin/bash
-if [ "$#" -ne 4 ]; then
-    echo "Wrong args | Usage: $0 <topic_name> <linear_x> <linear_y> <angular_x>"
+if [ "$#" -ne 3 ]; then
+    echo "Wrong args | Usage: $0 <topic_name> <linear_x> <angular_x>"
 fi
 topic_name=$1
 linear_x=$2

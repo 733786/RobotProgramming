@@ -4,8 +4,7 @@ if [ "$#" -ne 3 ]; then
 fi
 topic_name=$1
 linear_x=$2
-linear_y=$3
-angular_x=$4
+angular_x=$3
 rostopic pub /"$topic_name"/cmd_vel geometry_msgs/Twist "linear:
   x: $linear_x
   y: 0.0

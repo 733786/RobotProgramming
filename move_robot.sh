@@ -8,7 +8,7 @@ linear_y=$3
 angular_x=$4
 rostopic pub /"$topic_name"/cmd_vel geometry_msgs/Twist "linear:
   x: $linear_x
-  y: $linear_y
+  y: 0.0
   z: 0.0
 angular:
   x: $angular_x

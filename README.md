@@ -31,6 +31,6 @@ rosrun multi multi_node <config>.json
 
 A set of json configurations can be found in the following directory: "multi_ws/src/multi/test_data".
 
-#### Movement: ```. moveRobot.sh <robotName> <x> <y> <rv>```
+#### Movement: ```. moveRobot.sh <robotName> <tv> <rv>```
 #### Odometry: ```. robotOdometry.sh <robotName>```
 #### Laser Scannings: ```. laserScan.sh <robotName>>```
